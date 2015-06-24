@@ -203,6 +203,9 @@ static void sunxi_musb_enable(struct musb *musb)
 {
 	pr_debug("%s():\n", __func__);
 
+	musb_ep_select(musb->mregs, 0);
+	musb_writeb(musb->mregs, MUSB_FADDR, 0);
+
 	if (enabled)
 		return;
 
