@@ -41,35 +41,12 @@
 #include <part.h>
 #include <sparse_format.h>
 
-void write_sparse_image(block_dev_desc_t *dev_desc,
-		disk_partition_t *info, const char *part_name,
-		void *data, unsigned sz)
+static sparse_header_t *sparse_parse_header(void **data)
 {
-	lbaint_t blk;
-	lbaint_t blkcnt;
-	lbaint_t blks;
-	uint32_t bytes_written = 0;
-	unsigned int chunk;
-	unsigned int chunk_data_sz;
-	uint32_t *fill_buf = NULL;
-	uint32_t fill_val;
-	sparse_header_t *sparse_header;
-	chunk_header_t *chunk_header;
-	uint32_t total_blocks = 0;
-	int i;
-
 	/* Read and skip over sparse image header */
-	sparse_header = (sparse_header_t *) data;
+	sparse_header_t *sparse_header = (sparse_header_t *) *data;
 
-	data += sparse_header->file_hdr_sz;
-	if (sparse_header->file_hdr_sz > sizeof(sparse_header_t))
-	{
-		/*
-		 * Skip the remaining bytes in a header that is longer than
-		 * we expected.
-		 */
-		data += (sparse_header->file_hdr_sz - sizeof(sparse_header_t));
-	}
+	*data += sparse_header->file_hdr_sz;
 
 	debug("=== Sparse Image Header ===\n");
 	debug("magic: 0x%x\n", sparse_header->magic);
@@ -80,6 +57,32 @@ void write_sparse_image(block_dev_desc_t *dev_desc,
 	debug("blk_sz: %d\n", sparse_header->blk_sz);
 	debug("total_blks: %d\n", sparse_header->total_blks);
 	debug("total_chunks: %d\n", sparse_header->total_chunks);
+
+	return sparse_header;
+}
+
+void write_sparse_image(block_dev_desc_t *dev_desc,
+		disk_partition_t *info, const char *part_name,
+		void *data, unsigned sz)
+{
+	lbaint_t blk;
+	lbaint_t blkcnt;
+	lbaint_t blks;
+	uint32_t bytes_written = 0;
+       unsigned int chunk;
+       unsigned int chunk_data_sz;
+       uint32_t *fill_buf = NULL;
+       uint32_t fill_val;
+	sparse_header_t *sparse_header;
+       chunk_header_t *chunk_header;
+	uint32_t total_blocks = 0;
+	int i;
+
+	sparse_header = sparse_parse_header(&data);
+	if (!sparse_header) {
+		fastboot_fail("sparse header issue\n");
+		return;
+	}
 
 	/* verify sparse_header->blk_sz is an exact multiple of info->blksz */
 	if (sparse_header->blk_sz !=
