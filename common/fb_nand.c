@@ -115,8 +115,18 @@ static int fb_nand_sparse_write(struct sparse_storage *storage,
 	size_t written;
 	int ret;
 
-	ret = _fb_nand_write(sparse->nand, sparse->part, data,
-			     offset * storage->block_sz,
+	if (sparse->nand->slc_mode) {
+		unsigned int erase, page;
+
+		erase = (offset * storage->block_sz) / sparse->nand->erasesize;
+		erase = erase * 2;
+		page = (offset * storage->block_sz) % sparse->nand->erasesize;
+		offset = erase * sparse->nand->erasesize + page;
+	} else {
+		offset = offset * storage->block_sz;
+	}
+
+	ret = _fb_nand_write(sparse->nand, sparse->part, data, offset,
 			     size * storage->block_sz, &written);
 	if (ret < 0) {
 		printf("Failed to write sparse chunk\n");
