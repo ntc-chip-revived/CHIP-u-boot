@@ -36,11 +36,11 @@
 
 #include <config.h>
 #include <common.h>
-#include <aboot.h>
 #include <div64.h>
 #include <errno.h>
 #include <malloc.h>
 #include <part.h>
+#include <sparse.h>
 #include <sparse_format.h>
 
 #include <linux/math64.h>

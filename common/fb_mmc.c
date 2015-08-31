@@ -10,7 +10,7 @@
 #include <fastboot.h>
 #include <fb_mmc.h>
 #include <part.h>
-#include <aboot.h>
+#include <sparse.h>
 #include <sparse_format.h>
 #include <mmc.h>
 
