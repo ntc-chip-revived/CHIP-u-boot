@@ -690,7 +690,7 @@ int ubi_wl_get_peb(struct ubi_device *ubi)
 		return peb;
 
 	err = ubi_self_check_all_ff(ubi, peb, ubi->vid_hdr_aloffset,
-				    ubi->peb_size - ubi->vid_hdr_aloffset);
+				ubi->usable_peb_size - ubi->vid_hdr_aloffset);
 	if (err) {
 		ubi_err("new PEB %d does not contain all 0xFF bytes", peb);
 		return err;

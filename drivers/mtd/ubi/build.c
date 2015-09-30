@@ -687,8 +687,9 @@ static int io_init(struct ubi_device *ubi, int max_beb_per1024)
 	 */
 
 	ubi->peb_size   = ubi->mtd->erasesize;
-	ubi->peb_count  = mtd_div_by_eb(ubi->mtd->size, ubi->mtd);
 	ubi->flash_size = ubi->mtd->size;
+	ubi->peb_count  = mtd_div_by_eb(ubi->flash_size, ubi->mtd);
+	ubi->usable_peb_size = ubi->peb_size / ubi->mtd->slc_mode_ratio;
 
 	if (mtd_can_have_bb(ubi->mtd)) {
 		ubi->bad_allowed = 1;
@@ -771,7 +772,7 @@ static int io_init(struct ubi_device *ubi, int max_beb_per1024)
 	/* Check sanity */
 	if (ubi->vid_hdr_offset < UBI_EC_HDR_SIZE ||
 	    ubi->leb_start < ubi->vid_hdr_offset + UBI_VID_HDR_SIZE ||
-	    ubi->leb_start > ubi->peb_size - UBI_VID_HDR_SIZE ||
+	    ubi->leb_start > ubi->usable_peb_size - UBI_VID_HDR_SIZE ||
 	    ubi->leb_start & (ubi->min_io_size - 1)) {
 		ubi_err("bad VID header (%d) or data offsets (%d)",
 			ubi->vid_hdr_offset, ubi->leb_start);
@@ -797,7 +798,7 @@ static int io_init(struct ubi_device *ubi, int max_beb_per1024)
 		ubi->ro_mode = 1;
 	}
 
-	ubi->leb_size = ubi->peb_size - ubi->leb_start;
+	ubi->leb_size = ubi->usable_peb_size - ubi->leb_start;
 
 	if (!(ubi->mtd->flags & MTD_WRITEABLE)) {
 		ubi_msg("MTD device %d is write-protected, attach in read-only mode",
@@ -1001,7 +1002,7 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 		goto out_free;
 
 	err = -ENOMEM;
-	ubi->peb_buf = vmalloc(ubi->peb_size);
+	ubi->peb_buf = vmalloc(ubi->usable_peb_size);
 	if (!ubi->peb_buf)
 		goto out_free;
 
@@ -1042,7 +1043,7 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 	ubi_msg("attached mtd%d (name \"%s\", size %llu MiB) to ubi%d",
 		mtd->index, mtd->name, ubi->flash_size >> 20, ubi_num);
 	ubi_msg("PEB size: %d bytes (%d KiB), LEB size: %d bytes",
-		ubi->peb_size, ubi->peb_size >> 10, ubi->leb_size);
+		ubi->usable_peb_size, ubi->peb_size >> 10, ubi->leb_size);
 	ubi_msg("min./max. I/O unit sizes: %d/%d, sub-page size %d",
 		ubi->min_io_size, ubi->max_write_size, ubi->hdrs_min_io_size);
 	ubi_msg("VID header offset: %d (aligned %d), data offset: %d",
