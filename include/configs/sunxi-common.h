@@ -172,6 +172,10 @@
 #define CONFIG_ENV_OFFSET			(544 << 10) /* (8 + 24 + 512) KiB */
 #define CONFIG_ENV_SIZE				(128 << 10) /* 128 KiB */
 #define CONFIG_SYS_MMC_ENV_DEV		0	/* first detected MMC controller */
+#elif defined(CONFIG_ENV_IS_IN_UBI)
+#define CONFIG_ENV_UBI_PART			"UBI"
+#define CONFIG_ENV_UBI_VOLUME			"uboot-env"
+#define CONFIG_ENV_SIZE				0x20000
 #endif
 
 /* 64MB of malloc() pool */
@@ -408,7 +412,8 @@ extern int soft_i2c_gpio_scl;
 #if !defined CONFIG_ENV_IS_IN_MMC && \
     !defined CONFIG_ENV_IS_IN_NAND && \
     !defined CONFIG_ENV_IS_IN_FAT && \
-    !defined CONFIG_ENV_IS_IN_SPI_FLASH
+    !defined CONFIG_ENV_IS_IN_SPI_FLASH && \
+    !defined CONFIG_ENV_IS_IN_UBI
 #define CONFIG_ENV_IS_NOWHERE
 #endif
 
@@ -503,7 +508,7 @@ extern int soft_i2c_gpio_scl;
 	"console=ttyS0,115200\0" \
 	"usbnet_devaddr=de:ad:be:af:00:01\0" \
 	"mtdids=nand0=sunxi-nand.0\0" \
-	"mtdparts=mtdparts=sunxi-nand.0:4m(spl),4m(spl-backup),4m(uboot),4m(env),-(UBI)\0" \
+	"mtdparts=mtdparts=sunxi-nand.0:4m(spl),4m(spl-backup),4m(uboot),4m(uboot-backup),-(UBI)\0" \
 	BOOTENV
 
 #else /* ifndef CONFIG_SPL_BUILD */
