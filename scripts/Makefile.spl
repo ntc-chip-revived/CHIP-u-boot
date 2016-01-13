@@ -221,7 +221,8 @@ $(obj)/sunxi-spl.bin: $(obj)/$(SPL_BIN).bin
 
 quiet_cmd_sunxi_spl_image_builder = SUNXI_SPL_IMAGE_BUILDER $@
 cmd_sunxi_spl_image_builder = $(objtree)/tools/sunxi-spl-image-builder \
-				-s 64 -c 1024 -p 16384 -o 1664 -r 3 -u 4096 -d $< $@
+				-s 64 -c 1024 -p 16384 -o 1664 -b 0x400000 \
+				-r 3 -u 4096 -d $< $@
 $(obj)/sunxi-spl-with-ecc.bin: $(obj)/sunxi-spl.bin
 	$(call if_changed,sunxi_spl_image_builder)
 endif
