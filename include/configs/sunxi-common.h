@@ -415,6 +415,7 @@ extern int soft_i2c_gpio_scl;
     !defined CONFIG_ENV_IS_IN_SPI_FLASH && \
     !defined CONFIG_ENV_IS_IN_UBI
 #define CONFIG_ENV_IS_NOWHERE
+#define CONFIG_ENV_SIZE			0x20000
 #endif
 
 #define CONFIG_MISC_INIT_R
