@@ -106,6 +106,7 @@ struct image_info {
 	int ecc_step_size;
 	int page_size;
 	int oob_size;
+	int block_size;
 	int usable_page_size;
 	int repeat;
 	int disable_scrambler;
@@ -821,6 +822,11 @@ static int create_image(const struct image_info *info)
 	int page = 0, page_offset = 0;
 	FILE *src, *dst, *rnd;
 	int repeat = info->repeat;
+	int pages_per_block = info->block_size / info->page_size;
+	size_t ret;
+
+	if (!pages_per_block)
+		pages_per_block = 1;
 
 	bch = init_bch(14, info->ecc_strength, BCH_PRIMITIVE_POLY);
 	if (!bch) {
@@ -861,6 +867,7 @@ static int create_image(const struct image_info *info)
 			    rnd);
 		if (ret != info->page_size + info->oob_size - usable_page_size)
 			return -1;
+
 		memset(buffer + info->page_size, 0xff, 2);
 	}
 
@@ -937,6 +944,19 @@ static int create_image(const struct image_info *info)
 		}
 	}
 
+	while (page % pages_per_block) {
+		ret = fread(buffer, 1,
+			    info->page_size + info->oob_size, rnd);
+		if (ret != info->page_size + info->oob_size)
+			return -1;
+
+		memset(buffer + info->page_size, 0xff, 2);
+		fwrite(buffer,
+		       info->page_size + info->oob_size,
+		       1, dst);
+		page++;
+	}
+
 	return 0;
 }
 
@@ -951,6 +971,7 @@ static void display_help(int status)
 "-c size     --ecc-step-size=size    ECC step size\n"
 "-p size     --page-size=size        Page size\n"
 "-o size     --oob-size=size         OOB size\n"
+"-b size     --block-size=size       Block size\n"
 "-u size     --usable-page-size=size Usable page size\n"
 "-r num      --repeat=num            Number of redundant SPL images\n"
 "-d          --disable-scrambler     Disable the second scrambling pass\n"
@@ -974,13 +995,14 @@ int main(int argc, char **argv)
 			{"ecc-step-size", required_argument, 0, 'c'},
 			{"page-size", required_argument, 0, 'p'},
 			{"oob-size", required_argument, 0, 'o'},
+			{"block-size", required_argument, 0, 'b'},
 			{"usable-page-size", required_argument, 0, 'u'},
 			{"repeat", required_argument, 0, 'r'},
 			{"disable-scrambler", no_argument, 0, 'd'},
 			{0, 0, 0, 0},
 		};
 
-		int c = getopt_long(argc, argv, "s:c:p:o:u:r:d",
+		int c = getopt_long(argc, argv, "s:c:p:o:b:u:r:d",
 				long_options, &option_index);
 		if (c == EOF)
 			break;
@@ -1000,6 +1022,9 @@ int main(int argc, char **argv)
 			break;
 		case 'o':
 			info.oob_size = strtol(optarg, NULL, 0);
+			break;
+		case 'b':
+			info.block_size = strtol(optarg, NULL, 0);
 			break;
 		case 'u':
 			info.usable_page_size = strtol(optarg, NULL, 0);
