@@ -885,8 +885,14 @@ static int create_image(const struct image_info *info)
 			if (!repeat--)
 				break;
 
-			memset(buffer, 0xff, info->page_size + info->oob_size);
 			while (page % 0x40) {
+				ret = fread(buffer, 1,
+					    info->page_size + info->oob_size,
+					    rnd);
+				if (ret != info->page_size + info->oob_size)
+					return -1;
+
+				memset(buffer + info->page_size, 0xff, 2);
 				fwrite(buffer,
 				       info->page_size + info->oob_size,
 				       1, dst);
