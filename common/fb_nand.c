@@ -136,9 +136,6 @@ static int _fb_nand_write(nand_info_t *nand, struct part_info *part,
 		return _fb_nand_raw_write(nand, offset, buffer, length);
 	}
 
-	if (!strcmp(part->name, "UBI"))
-		flags |= WITH_SLC_MODE;
-
 	return nand_write_skip_bad(nand, offset, &length, written,
 				   part->size - (offset - part->offset),
 				   buffer, flags);
