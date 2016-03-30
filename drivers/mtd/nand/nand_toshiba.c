@@ -59,6 +59,7 @@ static int tc58teg_init(struct mtd_info *mtd, const uint8_t *id)
 
 	chip->setup_read_retry = tc58teg_setup_read_retry;
 	chip->read_retries = 10;
+	mtd->pairing = &dist3_pairing_scheme;
 
 	return 0;
 }
