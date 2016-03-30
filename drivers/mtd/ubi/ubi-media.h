@@ -34,6 +34,9 @@
 /* Volume identifier header magic number (ASCII "UBI!") */
 #define UBI_VID_HDR_MAGIC 0x55424921
 
+#define UBI_FEAT_BASE	0x1
+#define UBI_FEAT_CONSO	0x2
+
 /*
  * Volume type constants used in the volume identifier header.
  *
@@ -351,7 +354,7 @@ struct ubi_vid_hdr {
  * Empty records contain all zeroes and the CRC checksum of those zeroes.
  */
 struct ubi_vtbl_record {
-	__be32  reserved_pebs;
+	__be32  reserved_lebs;
 	__be32  alignment;
 	__be32  data_pad;
 	__u8    vol_type;
@@ -380,6 +383,7 @@ struct ubi_vtbl_record {
 #define UBI_FM_VHDR_MAGIC	0xFA370ED1
 #define UBI_FM_POOL_MAGIC	0x67AF4D08
 #define UBI_FM_EBA_MAGIC	0xf0c040a8
+#define UBI_FM_CONSO_MAGIC	0xc025011d
 
 /* A fastmap supber block can be located between PEB 0 and
  * UBI_FM_MAX_START */
@@ -436,7 +440,7 @@ struct ubi_fm_hdr {
 	__be32 bad_peb_count;
 	__be32 erase_peb_count;
 	__be32 vol_count;
-	__u8 padding[4];
+	__be32 consolidated_count;
 } __packed;
 
 /* struct ubi_fm_hdr is followed by two struct ubi_fm_scan_pool */
@@ -486,7 +490,8 @@ struct ubi_fm_volhdr {
 	__be32 data_pad;
 	__be32 used_ebs;
 	__be32 last_eb_bytes;
-	__u8 padding2[8];
+	__be32 consolidated_ebs;
+	__u8 padding2[4];
 } __packed;
 
 /* struct ubi_fm_volhdr is followed by one struct ubi_fm_eba records */
@@ -501,5 +506,15 @@ struct ubi_fm_eba {
 	__be32 magic;
 	__be32 reserved_pebs;
 	__be32 pnum[0];
+} __packed;
+
+struct ubi_fm_consolidated_leb {
+	__be32 lnum;
+	__be32 peb_pos;
+} __packed;
+
+struct ubi_fm_consolidated {
+	__be32 magic;
+	struct ubi_fm_consolidated_leb lebs[0];
 } __packed;
 #endif /* !__UBI_MEDIA_H__ */

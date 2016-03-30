@@ -7,5 +7,7 @@
 
 obj-y += attach.o build.o vtbl.o vmt.o upd.o kapi.o eba.o io.o wl.o crc32.o
 obj-$(CONFIG_MTD_UBI_FASTMAP) += fastmap.o
+obj-y += consolidate.o
 obj-y += misc.o
 obj-y += debug.o
+obj-y += work.o
