@@ -148,23 +148,30 @@ static int fb_nand_sparse_write(struct sparse_storage *storage,
 				char *data,
 				unsigned int *new_offset)
 {
+	u64 ofs = (u64)offset * storage->block_sz;
 	struct fb_nand_sparse *sparse = priv;
-	size_t written;
+	unsigned int nblocks = 0, i;
 	int ret;
 
-	printf("Writing at offset 0x%x\n", offset * storage->block_sz);
+	printf("Writing at offset 0x%llx\n", ofs);
 
-	ret = _fb_nand_write(sparse->nand, sparse->part, data,
-			     offset * storage->block_sz,
-			     size * storage->block_sz, &written);
-	if (ret < 0) {
-		printf("Failed to write sparse chunk\n");
-		return ret;
+	for (i = 0; i < size; i++) {
+		size_t used;
+
+		ret = _fb_nand_write(sparse->nand, sparse->part,
+				     data + (storage->block_sz * i),
+				     ofs, storage->block_sz, &used);
+		if (ret < 0) {
+			printf("Failed to write sparse chunk\n");
+			return ret;
+		}
+		ofs += used;
+		nblocks += used / storage->block_sz;
 	}
 
-	printf("New offset 0x%x\n", offset * storage->block_sz + written);
+	printf("New offset 0x%llx\n", ofs);
 
-	*new_offset = offset + (written / storage->block_sz);
+	*new_offset = offset + nblocks;
 	return size;
 }
 
