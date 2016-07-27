@@ -29,8 +29,11 @@ config MACH_SUN4I
 config MACH_SUN5I
 	bool "sun5i (Allwinner A13)"
 	select CPU_V7
+	select CPU_V7_HAS_NONSEC
+	select ARCH_SUPPORT_PSCI
 	select SUNXI_GEN_SUN4I
 	select SUPPORT_SPL
+	select ARMV7_BOOT_SEC_DEFAULT if OLD_SUNXI_KERNEL_COMPAT
 
 config MACH_SUN6I
 	bool "sun6i (Allwinner A31)"
