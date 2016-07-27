@@ -40,7 +40,14 @@ obj-$(CONFIG_AXP221_POWER)	+= pmic_bus.o
 obj-$(CONFIG_AXP818_POWER)	+= pmic_bus.o
 
 ifndef CONFIG_SPL_BUILD
-obj-$(CONFIG_ARMV7_PSCI)	+= psci.o
+ifdef CONFIG_ARMV7_PSCI
+obj-$(CONFIG_MACH_SUN6I)	+= psci.o
+obj-$(CONFIG_MACH_SUN7I)	+= psci.o
+obj-$(CONFIG_MACH_SUN8I)	+= psci.o
+
+obj-$(CONFIG_MACH_SUN5I)	+= psci_suspend.o
+obj-$(CONFIG_MACH_SUN7I)	+= psci_suspend.o
+endif
 endif
 
 ifdef CONFIG_SPL_BUILD

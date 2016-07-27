@@ -90,6 +90,10 @@ struct sunxi_ccm_reg {
 	u32 gmac_clk_cfg;	/* 0x164 */
 };
 
+/* osc24m_cfg bit field */
+#define OSC24M_EN		(0x1 << 0)
+#define OSC24M_LDO_EN		(0x1 << 16)
+
 /* apb1 bit field */
 #define APB1_CLK_SRC_OSC24M		(0x0 << 24)
 #define APB1_CLK_SRC_PLL6		(0x1 << 24)
@@ -207,6 +211,8 @@ struct sunxi_ccm_reg {
 #define CCM_AHB_GATE_SDRAM (0x1 << 14)
 #define CCM_AHB_GATE_DLL (0x1 << 15)
 #define CCM_AHB_GATE_ACE (0x1 << 16)
+
+#define CCM_PLL1_CTRL_EN		(0x1 << 31)
 
 #define CCM_PLL3_CTRL_M_SHIFT		0
 #define CCM_PLL3_CTRL_M_MASK		(0x7f << CCM_PLL3_CTRL_M_SHIFT)

@@ -48,7 +48,7 @@ static u32 __secure cp15_read_cntp_ctl(void)
 
 #define ONE_MS (CONFIG_TIMER_CLK_FREQ / 1000)
 
-static void __secure __mdelay(u32 ms)
+void __secure __mdelay(u32 ms)
 {
 	u32 reg = ONE_MS * ms;
 
