@@ -19,6 +19,9 @@
 
 #define CONFIG_SUNXI_USB_PHYS	2
 
+#define CONFIG_ARMV7_SECURE_BASE	SUNXI_SRAM_A1_BASE
+#define CONFIG_TIMER_CLK_FREQ		24000000
+
 /*
  * Include common sunxi configuration where most the settings are
  */
