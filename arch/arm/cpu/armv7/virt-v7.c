@@ -80,22 +80,11 @@ void __weak smp_kick_all_cpus(void)
 	kick_secondary_cpus_gic(gic_dist_addr);
 }
 
-__weak void psci_board_init(void)
+#ifdef CONFIG_ARM_GIC
+static int psci_gic_setup(void)
 {
-}
-
-int armv7_init_nonsec(void)
-{
-	unsigned int reg;
-	unsigned itlinesnr, i;
 	unsigned long gic_dist_addr;
-
-	/* check whether the CPU supports the security extensions */
-	reg = read_id_pfr1();
-	if ((reg & 0xF0) == 0) {
-		printf("nonsec: Security extensions not implemented.\n");
-		return -1;
-	}
+	unsigned itlinesnr, i;
 
 	/* the SCR register will be set directly in the monitor mode handler,
 	 * according to the spec one should not tinker with it in secure state
@@ -120,6 +109,31 @@ int armv7_init_nonsec(void)
 	 */
 	for (i = 1; i <= itlinesnr; i++)
 		writel((unsigned)-1, gic_dist_addr + GICD_IGROUPRn + 4 * i);
+
+	return 0;
+}
+#endif
+
+__weak void psci_board_init(void)
+{
+}
+
+int armv7_init_nonsec(void)
+{
+	unsigned int reg;
+
+	/* check whether the CPU supports the security extensions */
+	reg = read_id_pfr1();
+	if ((reg & 0xF0) == 0) {
+		printf("nonsec: Security extensions not implemented.\n");
+		return -1;
+	}
+
+#ifdef CONFIG_ARM_GIC
+	int ret = psci_gic_setup();
+	if (ret)
+		return ret;
+#endif
 
 	psci_board_init();
 

@@ -164,6 +164,7 @@ ENDPROC(_smp_pen)
  * though, but we check this in C before calling this function.
  */
 ENTRY(_nonsec_init)
+#ifdef CONFIG_ARM_GIC
 	get_gicd_addr	r3
 
 	mvn	r1, #0				@ all bits to 1
@@ -175,6 +176,7 @@ ENTRY(_nonsec_init)
 	str	r1, [r3, #GICC_CTLR]		@ and clear all other bits
 	mov	r1, #0xff
 	str	r1, [r3, #GICC_PMR]		@ set priority mask register
+#endif
 
 	mrc	p15, 0, r0, c1, c1, 2
 	movw	r1, #0x3fff
@@ -200,7 +202,11 @@ ENTRY(_nonsec_init)
 	mcr	p15, 0, r1, c12, c0, 1		@ set MVBAR to secure vectors
 	isb
 
+#ifdef CONFIG_ARM_GIC
 	mov	r0, r3				@ return GICC address
+#else
+	mov	r0, #0
+#endif
 	bx	lr
 ENDPROC(_nonsec_init)
 
