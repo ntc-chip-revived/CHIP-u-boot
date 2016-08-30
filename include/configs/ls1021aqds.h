@@ -9,8 +9,6 @@
 
 #define CONFIG_LS102XA
 
-#define CONFIG_ARMV7_PSCI
-
 #define CONFIG_SYS_FSL_CLK
 
 #define CONFIG_DISPLAY_CPUINFO
