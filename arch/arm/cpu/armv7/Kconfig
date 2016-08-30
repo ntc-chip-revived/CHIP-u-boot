@@ -41,4 +41,13 @@ config ARMV7_PSCI
 	help
 	  Say Y here to enable PSCI support.
 
+config ARMV7_PSCI_NR_CPUS
+	int "Maximum supported CPUs for PSCI"
+	depends on ARMV7_NONSEC
+	default 4
+	help
+	  The maximum number of CPUs supported in the PSCI firmware.
+	  It is no problem to set a larger value than the number of
+	  CPUs in the actual hardware implementation.
+
 endif
