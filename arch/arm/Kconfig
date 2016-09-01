@@ -262,6 +262,7 @@ config ARCH_BCM283X
 
 config TARGET_VEXPRESS_CA15_TC2
 	bool "Support vexpress_ca15_tc2"
+	select ARM_GIC
 	select CPU_V7
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
@@ -404,14 +405,17 @@ config TARGET_TI816X_EVM
 
 config TARGET_BCM28155_AP
 	bool "Support bcm28155_ap"
+	select ARM_GIC
 	select CPU_V7
 
 config TARGET_BCMCYGNUS
 	bool "Support bcmcygnus"
+	select ARM_GIC
 	select CPU_V7
 
 config TARGET_BCMNSP
 	bool "Support bcmnsp"
+	select ARM_GIC
 	select CPU_V7
 
 config ARCH_EXYNOS
@@ -447,6 +451,7 @@ config ARCH_KEYSTONE
 
 config ARCH_MX7
 	bool "Freescale MX7"
+	select ARM_GIC
 	select CPU_V7
 
 config ARCH_MX6
@@ -651,12 +656,14 @@ config TARGET_HIKEY
 
 config TARGET_LS1021AQDS
 	bool "Support ls1021aqds"
+	select ARM_GIC
 	select CPU_V7
 	select SUPPORT_SPL
 	select ARCH_SUPPORT_PSCI
 
 config TARGET_LS1021ATWR
 	bool "Support ls1021atwr"
+	select ARM_GIC
 	select CPU_V7
 	select SUPPORT_SPL
 	select ARCH_SUPPORT_PSCI
@@ -689,6 +696,7 @@ config ARCH_UNIPHIER
 	bool "Socionext UniPhier SoCs"
 	select CPU_V7
 	select SUPPORT_SPL
+	select ARM_GIC
 	select SPL
 	select OF_CONTROL
 	select SPL_OF_CONTROL
