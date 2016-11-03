@@ -700,8 +700,6 @@ struct nand_chip {
 			int feature_addr, uint8_t *subfeature_para);
 	int (*setup_read_retry)(struct mtd_info *mtd, int retry_mode);
 	void (*manuf_cleanup)(struct mtd_info *mtd);
-	void (*set_slc_mode)(struct mtd_info *mtd, bool enable);
-	void (*fix_page)(struct mtd_info *mtd, int *page);
 
 	void *manuf_priv;
 
@@ -734,7 +732,6 @@ struct nand_chip {
 	struct nand_jedec_params jedec_params;
  
 	int read_retries;
-	bool slc_mode;
 
 	flstate_t state;
 
@@ -831,6 +828,7 @@ struct nand_chip {
  * @onfi_timing_mode_default: the default ONFI timing mode entered after a NAND
  *			      reset. Should be deduced from timings described
  *			      in the datasheet.
+ * @pairing: The page pairing scheme used by this NAND, if any.
  *
  */
 struct nand_flash_dev {
@@ -853,6 +851,7 @@ struct nand_flash_dev {
 		uint16_t step_ds;
 	} ecc;
 	int onfi_timing_mode_default;
+	const struct mtd_pairing_scheme *pairing;
 };
 
 /**
@@ -1099,4 +1098,7 @@ int nand_read_oob_std(struct mtd_info *mtd, struct nand_chip *chip, int page);
 /* Default read_oob syndrome implementation */
 int nand_read_oob_syndrome(struct mtd_info *mtd, struct nand_chip *chip,
 			   int page);
+
+extern const struct mtd_pairing_scheme dist3_pairing_scheme;
+extern const struct mtd_pairing_scheme dist6_pairing_scheme;
 #endif /* __LINUX_MTD_NAND_H */

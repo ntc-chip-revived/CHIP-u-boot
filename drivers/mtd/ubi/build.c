@@ -391,7 +391,9 @@ static ssize_t dev_attribute_show(struct device *dev,
 	if (attr == &dev_eraseblock_size)
 		ret = sprintf(buf, "%d\n", ubi->leb_size);
 	else if (attr == &dev_avail_eraseblocks)
-		ret = sprintf(buf, "%d\n", ubi->avail_pebs);
+		ret = sprintf(buf, "%d\n",
+			      ubi->avail_pebs *
+			      ubi->lebs_per_cpeb);
 	else if (attr == &dev_total_eraseblocks)
 		ret = sprintf(buf, "%d\n", ubi->good_peb_count);
 	else if (attr == &dev_volumes_count)
@@ -673,10 +675,10 @@ static int io_init(struct ubi_device *ubi, int max_beb_per1024)
 	 * physical eraseblocks maximum.
 	 */
 
-	ubi->peb_size   = ubi->mtd->erasesize;
+	ubi->peb_size = ubi->mtd->erasesize;
+	ubi->lebs_per_cpeb = mtd_pairing_groups_per_eb(ubi->mtd);
+	ubi->peb_count  = mtd_div_by_eb(ubi->mtd->size, ubi->mtd);
 	ubi->flash_size = ubi->mtd->size;
-	ubi->peb_count  = mtd_div_by_eb(ubi->flash_size, ubi->mtd);
-	ubi->usable_peb_size = ubi->peb_size / ubi->mtd->slc_mode_ratio;
 
 	if (mtd_can_have_bb(ubi->mtd)) {
 		ubi->bad_allowed = 1;
@@ -763,7 +765,7 @@ static int io_init(struct ubi_device *ubi, int max_beb_per1024)
 	/* Check sanity */
 	if (ubi->vid_hdr_offset < UBI_EC_HDR_SIZE ||
 	    ubi->leb_start < ubi->vid_hdr_offset + UBI_VID_HDR_SIZE ||
-	    ubi->leb_start > ubi->usable_peb_size - UBI_VID_HDR_SIZE ||
+	    ubi->leb_start > ubi->peb_size - UBI_VID_HDR_SIZE ||
 	    ubi->leb_start & (ubi->min_io_size - 1)) {
 		ubi_err(ubi, "bad VID header (%d) or data offsets (%d)",
 			ubi->vid_hdr_offset, ubi->leb_start);
@@ -789,7 +791,7 @@ static int io_init(struct ubi_device *ubi, int max_beb_per1024)
 		ubi->ro_mode = 1;
 	}
 
-	ubi->leb_size = ubi->usable_peb_size - ubi->leb_start;
+	ubi->leb_size = (ubi->peb_size / ubi->lebs_per_cpeb) - ubi->leb_start;
 
 	if (!(ubi->mtd->flags & MTD_WRITEABLE)) {
 		ubi_msg(ubi, "MTD device %d is write-protected, attach in read-only mode",
@@ -822,7 +824,7 @@ static int autoresize(struct ubi_device *ubi, int vol_id)
 {
 	struct ubi_volume_desc desc;
 	struct ubi_volume *vol = ubi->volumes[vol_id];
-	int err, old_reserved_pebs = vol->reserved_pebs;
+	int err, old_reserved_lebs = vol->reserved_lebs;
 
 	if (ubi->ro_mode) {
 		ubi_warn(ubi, "skip auto-resize because of R/O mode");
@@ -849,9 +851,11 @@ static int autoresize(struct ubi_device *ubi, int vol_id)
 			ubi_err(ubi, "cannot clean auto-resize flag for volume %d",
 				vol_id);
 	} else {
+		int avail_lebs = ubi->avail_pebs *
+				 ubi->lebs_per_cpeb;
+
 		desc.vol = vol;
-		err = ubi_resize_volume(&desc,
-					old_reserved_pebs + ubi->avail_pebs);
+		err = ubi_resize_volume(&desc, old_reserved_lebs + avail_lebs);
 		if (err)
 			ubi_err(ubi, "cannot auto-resize volume %d",
 				vol_id);
@@ -861,7 +865,7 @@ static int autoresize(struct ubi_device *ubi, int vol_id)
 		return err;
 
 	ubi_msg(ubi, "volume %d (\"%s\") re-sized from %d to %d LEBs",
-		vol_id, vol->name, old_reserved_pebs, vol->reserved_pebs);
+		vol_id, vol->name, old_reserved_lebs, vol->reserved_lebs);
 	return 0;
 }
 
@@ -997,7 +1001,7 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 		goto out_free;
 
 	err = -ENOMEM;
-	ubi->peb_buf = vmalloc(ubi->usable_peb_size);
+	ubi->peb_buf = vmalloc(ubi->peb_size);
 	if (!ubi->peb_buf)
 		goto out_free;
 
@@ -1007,17 +1011,14 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 	if (!ubi->fm_buf)
 		goto out_free;
 #endif
+	ubi->thread_enabled = 1;
+	ubi->thread_suspended = 1;
+
 	err = ubi_attach(ubi, 0);
 	if (err) {
 		ubi_err(ubi, "failed to attach mtd%d, error %d",
 			mtd->index, err);
 		goto out_free;
-	}
-
-	if (ubi->autoresize_vol_id != -1) {
-		err = autoresize(ubi, ubi->autoresize_vol_id);
-		if (err)
-			goto out_detach;
 	}
 
 	err = uif_init(ubi, &ref);
@@ -1039,7 +1040,7 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 	ubi_msg(ubi, "attached mtd%d (name \"%s\", size %llu MiB)",
 		mtd->index, mtd->name, ubi->flash_size >> 20);
 	ubi_msg(ubi, "PEB size: %d bytes (%d KiB), LEB size: %d bytes",
-		ubi->usable_peb_size, ubi->peb_size >> 10, ubi->leb_size);
+		ubi->peb_size, ubi->peb_size >> 10, ubi->leb_size);
 	ubi_msg(ubi, "min./max. I/O unit sizes: %d/%d, sub-page size %d",
 		ubi->min_io_size, ubi->max_write_size, ubi->hdrs_min_io_size);
 	ubi_msg(ubi, "VID header offset: %d (aligned %d), data offset: %d",
@@ -1054,13 +1055,14 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 		ubi->image_seq);
 	ubi_msg(ubi, "available PEBs: %d, total reserved PEBs: %d, PEBs reserved for bad PEB handling: %d",
 		ubi->avail_pebs, ubi->rsvd_pebs, ubi->beb_rsvd_pebs);
+	ubi_msg(ubi, "LEBs per PEB: %d", ubi->lebs_per_cpeb);
 
 	/*
 	 * The below lock makes sure we do not race with 'ubi_thread()' which
 	 * checks @ubi->thread_enabled. Otherwise we may fail to wake it up.
 	 */
 	spin_lock(&ubi->wl_lock);
-	ubi->thread_enabled = 1;
+	ubi->thread_suspended = 0;
 #ifndef __UBOOT__
 	wake_up_process(ubi->bgt_thread);
 #else
@@ -1077,10 +1079,20 @@ int ubi_attach_mtd_dev(struct mtd_info *mtd, int ubi_num,
 
 	spin_unlock(&ubi->wl_lock);
 
+	if (ubi->autoresize_vol_id != -1) {
+		err = autoresize(ubi, ubi->autoresize_vol_id);
+		if (err)
+			goto out_kthread;
+	}
+
 	ubi_devices[ubi_num] = ubi;
 	ubi_notify_all(ubi, UBI_VOLUME_ADDED, NULL);
 	return ubi_num;
 
+out_kthread:
+#ifndef __UBOOT__
+	kthread_stop(ubi->bgt_thread);
+#endif
 out_debugfs:
 	ubi_debugfs_exit_dev(ubi);
 out_uif:

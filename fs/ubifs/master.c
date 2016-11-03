@@ -366,7 +366,7 @@ int ubifs_write_master(struct ubifs_info *c)
 	len = UBIFS_MST_NODE_SZ;
 
 	if (offs + UBIFS_MST_NODE_SZ > c->leb_size) {
-		err = ubifs_leb_unmap(c, lnum);
+		err = ubifs_leb_change(c, lnum, NULL, 0);
 		if (err)
 			return err;
 		offs = 0;
@@ -382,7 +382,7 @@ int ubifs_write_master(struct ubifs_info *c)
 	lnum += 1;
 
 	if (offs == 0) {
-		err = ubifs_leb_unmap(c, lnum);
+		err = ubifs_leb_change(c, lnum, NULL, 0);
 		if (err)
 			return err;
 	}

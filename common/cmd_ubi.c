@@ -209,7 +209,7 @@ static struct ubi_volume *ubi_find_volume(char *volume)
 
 static int ubi_remove_vol(char *volume)
 {
-	int err, reserved_pebs, i;
+	int err, reserved_lebs, i;
 	struct ubi_volume *vol;
 
 	vol = ubi_find_volume(volume);
@@ -229,8 +229,8 @@ static int ubi_remove_vol(char *volume)
 		printf("Error changing Vol tabel record err=%x\n", err);
 		goto out_err;
 	}
-	reserved_pebs = vol->reserved_pebs;
-	for (i = 0; i < vol->reserved_pebs; i++) {
+	reserved_lebs = vol->reserved_lebs;
+	for (i = 0; i < vol->reserved_lebs; i++) {
 		err = ubi_eba_unmap_leb(ubi, vol, i);
 		if (err)
 			goto out_err;
@@ -240,8 +240,8 @@ static int ubi_remove_vol(char *volume)
 	ubi->volumes[vol->vol_id]->eba_tbl = NULL;
 	ubi->volumes[vol->vol_id] = NULL;
 
-	ubi->rsvd_pebs -= reserved_pebs;
-	ubi->avail_pebs += reserved_pebs;
+	ubi->rsvd_pebs -= reserved_lebs;
+	ubi->avail_pebs += reserved_lebs;
 	i = ubi->beb_rsvd_level - ubi->beb_rsvd_pebs;
 	if (i > 0) {
 		i = ubi->avail_pebs >= i ? i : ubi->avail_pebs;
@@ -307,7 +307,7 @@ int ubi_volume_begin_write(char *volume, void *buf, size_t size,
 	if (vol == NULL)
 		return ENODEV;
 
-	rsvd_bytes = vol->reserved_pebs * (ubi->leb_size - vol->data_pad);
+	rsvd_bytes = vol->reserved_lebs * (ubi->leb_size - vol->data_pad);
 	if (size < 0 || size > rsvd_bytes) {
 		printf("size > volume size! Aborting!\n");
 		return EINVAL;
