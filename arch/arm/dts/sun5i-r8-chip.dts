@@ -137,12 +137,12 @@
 		reg = <0>;
 		allwinner,rb = <0>;
 		nand-ecc-mode = "hw";
+/*
 		nand-ecc-step-size = <1024>;
 		nand-ecc-strength = <56>;
-/*
 		nand-on-flash-bbt;
-*/
 		allwinner,randomize;
+*/
 	};
 };
 
